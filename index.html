@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yearly Academic Portfolio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-12">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+    
+    <!-- Top Header & Term Switcher -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+          <span class="p-2 bg-blue-50 text-blue-600 rounded-xl">
+            <i class="fa-solid font-bold fa-book-bookmark text-xl"></i>
+          </span>
+          Academic Portfolio
+        </h1>
+        <p class="text-xs text-slate-500 mt-1">Organize tasks, compute progress, and log bonus points effortlessly.</p>
+      </div>
+
+      <!-- Term Selector (Strictly 3 Terms) -->
+      <div class="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200/60" id="termSelector">
+        <button onclick="setTerm('Term 1')" class="term-btn px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200 active-term" data-term="Term 1">
+          Term 1
+        </button>
+        <button onclick="setTerm('Term 2')" class="term-btn px-5 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-200" data-term="Term 2">
+          Term 2
+        </button>
+        <button onclick="setTerm('Term 3')" class="term-btn px-5 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-200" data-term="Term 3">
+          Term 3
+        </button>
+      </div>
+    </header>
+
+    <!-- Subject Folder Tabs -->
+    <div class="mb-6">
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 scrollbar-thin" id="folderBar">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Active Subject Header & Rename/Delete Controls -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+      <div class="flex items-center gap-3 flex-1 min-w-[240px]">
+        <i class="fa-solid fa-folder-open text-blue-600 text-lg"></i>
+        <input 
+          type="text" 
+          id="subjectTitle" 
+          class="text-xl font-bold text-slate-800 bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-blue-600 focus:outline-none px-1 py-0.5 transition-all w-full max-w-md"
+          placeholder="Subject Name"
+          onchange="updateSubjectName(this.value)"
+        />
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="addTask()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2 rounded-lg shadow-sm transition-colors">
+          <i class="fa-solid fa-plus text-xs"></i> Add Task
+        </button>
+        <button onclick="deleteCurrentSubject()" class="text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 font-medium text-sm px-3 py-2 rounded-lg transition-all" title="Delete Folder">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Grid Layout (Table + Plus Points Box) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Task Table Column (2/3 width on desktop) -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                  <th class="py-3.5 px-4 w-[140px]">Date</th>
+                  <th class="py-3.5 px-4 w-[190px]">Title</th>
+                  <th class="py-3.5 px-4 min-w-[180px]">Coverage</th>
+                  <th class="py-3.5 px-4 w-[120px]">Score</th>
+                  <th class="py-3.5 px-4 w-[50px] text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="taskRows" class="divide-y divide-slate-100 text-sm">
+                <!-- Dynamically populated rows -->
+              </tbody>
+              <tfoot>
+                <tr class="bg-slate-50/90 border-t-2 border-slate-200 font-bold text-slate-800">
+                  <td colspan="3" class="py-4 px-4 text-right text-slate-600">Total Progress Percentage:</td>
+                  <td colspan="2" class="py-4 px-4 text-blue-600 text-lg font-extrabold" id="totalPercentage">
+                    0.00%
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plus Points Slot Column (Expanded & Spacious) -->
+      <div class="lg:col-span-1">
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-4 sticky top-6">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 bg-amber-50 text-amber-600 rounded-lg">
+                <i class="fa-solid fa-star text-sm"></i>
+              </span>
+              <h2 class="font-bold text-slate-900 text-base">Plus Points Slot</h2>
+            </div>
+            <span class="text-xs text-slate-400 font-medium">Optional Boosts</span>
+          </div>
+
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Record extra credit or incentive points here. Check the box to apply them directly into your total subject grade percentage.
+          </p>
+
+          <!-- Input Controls with Spacious Layout -->
+          <div class="space-y-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/60">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Reason / Activity Description</label>
+              <input 
+                type="text" 
+                id="plusDesc" 
+                placeholder="e.g. Perfect attendance bonus, Math Quiz Bee representative" 
+                class="w-full text-sm px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+              />
+            </div>
+            <div class="flex items-end gap-2">
+              <div class="flex-1">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Points Value (+)</label>
+                <input 
+                  type="number" 
+                  id="plusVal" 
+                  placeholder="e.g. 5" 
+                  step="0.5"
+                  class="w-full text-sm px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                />
+              </div>
+              <button 
+                onclick="addPlusPoint()" 
+                class="bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 h-[38px]"
+              >
+                <i class="fa-solid fa-plus text-xs"></i> Add
+              </button>
+            </div>
+          </div>
+
+          <!-- Logged Plus Points List -->
+          <div class="space-y-2 pt-2">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Logged Bonus Items</h3>
+            <ul id="plusList" class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+              <!-- Dynamically populated list -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Custom Alert Modal (No browser alert windows used) -->
+  <div id="modalOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-100 space-y-4">
+      <h3 class="font-bold text-slate-900 text-lg" id="modalTitle">Notice</h3>
+      <p class="text-sm text-slate-600 leading-relaxed" id="modalMessage"></p>
+      <div class="flex justify-end gap-2 pt-2" id="modalActions">
+        <button onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg transition-colors">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CATEGORIES = [
+      "Quiz", 
+      "Performance Tasks", 
+      "Activities", 
+      "Exams", 
+      "Summative Test 1", 
+      "Summative Test 2", 
+      "Written Works"
+    ];
+
+    // Initial State with Default Example Folders
+    let state = JSON.parse(localStorage.getItem('academic_portfolio_v2')) || {
+      currentTerm: 'Term 1',
+      activeSubjectId: '1',
+      subjects: [
+        { 
+          id: '1', 
+          term: 'Term 1', 
+          name: 'General Mathematics', 
+          tasks: [
+            { id: 't1', date: '2026-09-10', title: 'Quiz', coverage: 'Functions & Graphs', score: '18/20' },
+            { id: 't2', date: '2026-09-24', title: 'Performance Tasks', coverage: 'Real-world problem solving', score: '48/50' }
+          ], 
+          plusPoints: [
+            { id: 'p1', desc: 'Recitation active participation', val: 2, applyToScore: false }
+          ] 
+        },
+        { 
+          id: '2', 
+          term: 'Term 1', 
+          name: 'English for Academic Purposes', 
+          tasks: [
+            { id: 't3', date: '2026-09-15', title: 'Written Works', coverage: 'Position Paper Outline', score: '25/30' }
+          ], 
+          plusPoints: [] 
+        }
+      ]
+    };
+
+    function saveState() {
+      localStorage.setItem('academic_portfolio_v2', JSON.stringify(state));
+      render();
+    }
+
+    // Modal Helper
+    function showAlert(title, message, onConfirm = null) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+      const actions = document.getElementById('modalActions');
+      
+      if (onConfirm) {
+        actions.innerHTML = `
+          <button onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg transition-colors">Cancel</button>
+          <button id="confirmBtn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-lg transition-colors">Delete</button>
+        `;
+        document.getElementById('confirmBtn').onclick = () => {
+          onConfirm();
+          closeModal();
+        };
+      } else {
+        actions.innerHTML = `
+          <button onclick="closeModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors">OK</button>
+        `;
+      }
+      document.getElementById('modalOverlay').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+    }
+
+    // Term Switching Logic (Fixed to 3 terms)
+    function setTerm(term) {
+      state.currentTerm = term;
+      const termSubs = state.subjects.filter(s => s.term === term);
+      state.activeSubjectId = termSubs.length ? termSubs[0].id : null;
+      saveState();
+    }
+
+    // Subject Folder Operations
+    function addSubject() {
+      const defaultName = `Subject ${state.subjects.filter(s => s.term === state.currentTerm).length + 1}`;
+      const newSub = {
+        id: Date.now().toString(),
+        term: state.currentTerm,
+        name: defaultName,
+        tasks: [],
+        plusPoints: []
+      };
+      state.subjects.push(newSub);
+      state.activeSubjectId = newSub.id;
+      saveState();
+    }
+
+    function updateSubjectName(newName) {
+      const sub = getActiveSubject();
+      if (sub && newName.trim()) {
+        sub.name = newName.trim();
+        saveState();
+      }
+    }
+
+    function deleteCurrentSubject() {
+      const sub = getActiveSubject();
+      if (!sub) return;
+
+      showAlert(
+        "Delete Folder",
+        `Are you sure you want to delete "${sub.name}" and all its recorded tasks?`,
+        () => {
+          state.subjects = state.subjects.filter(s => s.id !== sub.id);
+          const remaining = state.subjects.filter(s => s.term === state.currentTerm);
+          state.activeSubjectId = remaining.length ? remaining[0].id : null;
+          saveState();
+        }
+      );
+    }
+
+    function getActiveSubject() {
+      return state.subjects.find(s => s.id === state.activeSubjectId);
+    }
+
+    // Task Rows Operations
+    function addTask() {
+      const sub = getActiveSubject();
+      if (!sub) {
+        showAlert("No Folder Selected", "Please create or select a subject folder first.");
+        return;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      sub.tasks.push({
+        id: Date.now().toString(),
+        date: today,
+        title: CATEGORIES[0],
+        coverage: '',
+        score: '0/10'
+      });
+      saveState();
+    }
+
+    function updateTask(id, field, value) {
+      const sub = getActiveSubject();
+      if (!sub) return;
+      const task = sub.tasks.find(t => t.id === id);
+      if (task) {
+        task[field] = value;
+        saveState();
+      }
+    }
+
+    function deleteTask(id) {
+      const sub = getActiveSubject();
+      if (!sub) return;
+      sub.tasks = sub.tasks.filter(t => t.id !== id);
+      saveState();
+    }
+
+    // Plus Points Operations
+    function addPlusPoint() {
+      const descInput = document.getElementById('plusDesc');
+      const valInput = document.getElementById('plusVal');
+      const desc = descInput.value.trim();
+      const val = parseFloat(valInput.value);
+
+      const sub = getActiveSubject();
+      if (!sub) {
+        showAlert("No Folder Selected", "Please select a subject folder first.");
+        return;
+      }
+      if (!desc) {
+        showAlert("Description Required", "Please type a reason for the plus points.");
+        return;
+      }
+      if (isNaN(val) || val <= 0) {
+        showAlert("Invalid Points", "Please enter a valid positive number for points.");
+        return;
+      }
+
+      sub.plusPoints.push({
+        id: Date.now().toString(),
+        desc: desc,
+        val: val,
+        applyToScore: false // Explicitly defaults to FALSE as requested
+      });
+
+      descInput.value = '';
+      valInput.value = '';
+      saveState();
+    }
+
+    function togglePlusPoint(id) {
+      const sub = getActiveSubject();
+      if (!sub) return;
+      const pt = sub.plusPoints.find(p => p.id === id);
+      if (pt) {
+        pt.applyToScore = !pt.applyToScore;
+        saveState();
+      }
+    }
+
+    function deletePlusPoint(id) {
+      const sub = getActiveSubject();
+      if (!sub) return;
+      sub.plusPoints = sub.plusPoints.filter(p => p.id !== id);
+      saveState();
+    }
+
+    // Automatic Percentage Progress Computation
+    function calculatePercentage(sub) {
+      if (!sub || !sub.tasks.length) return '0.00';
+      let totalEarned = 0;
+      let totalMax = 0;
+
+      sub.tasks.forEach(task => {
+        if (!task.score || !task.score.includes('/')) return;
+        const parts = task.score.split('/').map(n => parseFloat(n.trim()));
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[1] > 0) {
+          totalEarned += parts[0];
+          totalMax += parts[1];
+        }
+      });
+
+      if (totalMax === 0) return '0.00';
+
+      // CRITICAL: Only add plus points if manually checked
+      sub.plusPoints.forEach(pt => {
+        if (pt.applyToScore) {
+          totalEarned += pt.val;
+        }
+      });
+
+      const percentage = (totalEarned / totalMax) * 100;
+      return percentage.toFixed(2);
+    }
+
+    function render() {
+      // 1. Render Term Switcher Active Styles
+      document.querySelectorAll('.term-btn').forEach(btn => {
+        const isCurrent = btn.getAttribute('data-term') === state.currentTerm;
+        if (isCurrent) {
+          btn.className = "term-btn px-5 py-2 text-sm font-semibold rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/80 transition-all duration-200";
+        } else {
+          btn.className = "term-btn px-5 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-200";
+        }
+      });
+
+      // 2. Render Subject Folder Tabs
+      const folderBar = document.getElementById('folderBar');
+      const termSubjects = state.subjects.filter(s => s.term === state.currentTerm);
+
+      if (!state.activeSubjectId && termSubjects.length) {
+        state.activeSubjectId = termSubjects[0].id;
+      }
+
+      let tabsHTML = termSubjects.map(s => {
+        const isActive = s.id === state.activeSubjectId;
+        return `
+          <button 
+            onclick="state.activeSubjectId='${s.id}'; saveState();"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-all whitespace-nowrap border-b-2 ${
+              isActive 
+                ? 'bg-white text-blue-600 border-blue-600 shadow-sm' 
+                : 'bg-slate-100/70 text-slate-600 border-transparent hover:bg-slate-200/60 hover:text-slate-900'
+            }"
+          >
+            <i class="fa-solid fa-folder text-xs ${isActive ? 'text-blue-600' : 'text-slate-400'}"></i>
+            <span>${s.name}</span>
+          </button>
+        `;
+      }).join('');
+
+      tabsHTML += `
+        <button 
+          onclick="addSubject()" 
+          class="flex items-center gap-1.5 px-3 py-2.5 rounded-t-xl text-xs font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all whitespace-nowrap border-b-2 border-transparent"
+        >
+          <i class="fa-solid fa-plus"></i> New Subject
+        </button>
+      `;
+      folderBar.innerHTML = tabsHTML;
+
+      // 3. Render Active Subject Details & Tasks Table
+      const sub = getActiveSubject();
+      const taskRows = document.getElementById('taskRows');
+      const plusList = document.getElementById('plusList');
+      const subjectTitleInput = document.getElementById('subjectTitle');
+
+      if (!sub) {
+        subjectTitleInput.value = '';
+        subjectTitleInput.disabled = true;
+        taskRows.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-8 text-center text-slate-400">
+              <i class="fa-solid fa-folder-open text-2xl mb-2 block"></i>
+              No subject folder found in ${state.currentTerm}. Click "+ New Subject" above to create one.
+            </td>
+          </tr>
+        `;
+        document.getElementById('totalPercentage').textContent = '0.00%';
+        plusList.innerHTML = '<li class="text-xs text-slate-400 text-center py-4">No folder selected</li>';
+        return;
+      }
+
+      subjectTitleInput.disabled = false;
+      subjectTitleInput.value = sub.name;
+
+      // Render Task Rows
+      if (!sub.tasks.length) {
+        taskRows.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-8 text-center text-slate-400">
+              No tasks added yet. Click "+ Add Task" to begin logging your work.
+            </td>
+          </tr>
+        `;
+      } else {
+        taskRows.innerHTML = sub.tasks.map(t => `
+          <tr class="hover:bg-slate-50/80 transition-colors">
+            <td class="py-2.5 px-4">
+              <input 
+                type="date" 
+                value="${t.date}" 
+                onchange="updateTask('${t.id}', 'date', this.value)"
+                class="w-full bg-transparent border border-slate-200 rounded-lg px-2.5 py-1 text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </td>
+            <td class="py-2.5 px-4">
+              <select 
+                onchange="updateTask('${t.id}', 'title', this.value)"
+                class="w-full bg-transparent border border-slate-200 rounded-lg px-2.5 py-1 text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              >
+                ${CATEGORIES.map(cat => `<option value="${cat}" ${t.title === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+              </select>
+            </td>
+            <td class="py-2.5 px-4">
+              <input 
+                type="text" 
+                value="${t.coverage}" 
+                placeholder="Topic or lesson coverage" 
+                onchange="updateTask('${t.id}', 'coverage', this.value)"
+                class="w-full bg-transparent border border-slate-200 rounded-lg px-2.5 py-1 text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-300"
+              />
+            </td>
+            <td class="py-2.5 px-4">
+              <input 
+                type="text" 
+                value="${t.score}" 
+                placeholder="e.g. 10/10" 
+                onchange="updateTask('${t.id}', 'score', this.value)"
+                class="w-full font-semibold bg-transparent border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-center"
+              />
+            </td>
+            <td class="py-2.5 px-4 text-center">
+              <button 
+                onclick="deleteTask('${t.id}')" 
+                class="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                title="Delete Row"
+              >
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // 4. Update Automatic Total Percentage
+      document.getElementById('totalPercentage').textContent = `${calculatePercentage(sub)}%`;
+
+      // 5. Render Expanded Plus Points List
+      if (!sub.plusPoints.length) {
+        plusList.innerHTML = '<li class="text-xs text-slate-400 text-center py-4 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">No plus points logged for this subject yet.</li>';
+      } else {
+        plusList.innerHTML = sub.plusPoints.map(p => `
+          <li class="flex items-start justify-between gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl hover:border-slate-300 transition-all">
+            <div class="flex items-start gap-2.5 min-w-0 flex-1">
+              <input 
+                type="checkbox" 
+                ${p.applyToScore ? 'checked' : ''} 
+                onchange="togglePlusPoint('${p.id}')"
+                class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold text-slate-800 break-words leading-tight">${p.desc}</p>
+                <span class="inline-block mt-1 text-[11px] font-extrabold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
+                  +${p.val} Pts ${p.applyToScore ? '(Applied to Grade)' : '(In Reserves)'}
+                </span>
+              </div>
+            </div>
+            <button 
+              onclick="deletePlusPoint('${p.id}')" 
+              class="text-slate-400 hover:text-rose-600 transition-colors p-1"
+              title="Delete Bonus Item"
+            >
+              <i class="fa-regular fa-trash-can text-xs"></i>
+            </button>
+          </li>
+        `).join('');
+      }
+    }
+
+    // Initialize App
+    render();
+  </script>
+</body>
+</html>
